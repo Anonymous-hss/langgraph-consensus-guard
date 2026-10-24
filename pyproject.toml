@@ -1,0 +1,115 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "langgraph-consensus-guard"
+version = "0.1.0"
+description = "Multi-agent consensus guardrails with deterministic mathematical anchoring for LangGraph workflows"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Anonymous-hss", email = "anonymous-hss@users.noreply.github.com" },
+]
+keywords = [
+    "langgraph",
+    "guardrails",
+    "consensus",
+    "multi-agent",
+    "data-quality",
+    "governance",
+    "fairness",
+    "deterministic-anchoring",
+    "llm-evaluation",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Quality Assurance",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.7.0",
+    "typing_extensions>=4.8.0",
+]
+
+[project.optional-dependencies]
+langgraph = [
+    "langgraph>=0.1.14",
+    "langchain-core>=0.3.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.4.0",
+    "pyright>=1.1.360",
+]
+
+[project.urls]
+Homepage = "https://github.com/Anonymous-hss/langgraph-consensus-guard"
+Repository = "https://github.com/Anonymous-hss/langgraph-consensus-guard.git"
+Issues = "https://github.com/Anonymous-hss/langgraph-consensus-guard/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/langgraph_consensus_guard"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+src = ["src", "tests", "examples"]
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "RUF",    # Ruff-specific rules
+]
+ignore = [
+    "E501",   # line length violations (handled by formatter)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["langgraph_consensus_guard"]
+
+[tool.pyright]
+include = ["src", "tests", "examples"]
+pythonVersion = "3.10"
+pythonPlatform = "All"
+typeCheckingMode = "strict"
+reportMissingImports = "none"
+reportMissingModuleSource = false
+reportMissingTypeStubs = false
+reportUnknownMemberType = "none"
+reportUnknownVariableType = "none"
+reportUnknownArgumentType = "none"
+reportUnusedImport = true
+reportUnusedVariable = true
+reportDuplicateImport = true
+reportUntypedFunctionDecorator = true
+reportUntypedClassDecorator = true
+reportUntypedBaseClass = true
+reportGeneralTypeIssues = true
+reportIncompatibleMethodOverride = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+python_files = ["test_*.py"]

@@ -1,0 +1,23 @@
+{
+  "include": [
+    "src",
+    "tests",
+    "examples"
+  ],
+  "pythonVersion": "3.10",
+  "pythonPlatform": "All",
+  "typeCheckingMode": "strict",
+  "reportMissingImports": "none",
+  "reportMissingTypeStubs": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnusedImport": "error",
+  "reportUnusedVariable": "error",
+  "reportDuplicateImport": "error",
+  "reportUntypedFunctionDecorator": "error",
+  "reportUntypedClassDecorator": "error",
+  "reportUntypedBaseClass": "error",
+  "reportGeneralTypeIssues": "error",
+  "reportIncompatibleMethodOverride": "error"
+}
