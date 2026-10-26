@@ -42,6 +42,8 @@ classifiers = [
 dependencies = [
     "pydantic>=2.7.0",
     "typing_extensions>=4.8.0",
+    "pandas>=2.0.0",
+    "numpy>=1.24.0",
 ]
 
 [project.optional-dependencies]
@@ -62,7 +64,10 @@ Repository = "https://github.com/Anonymous-hss/langgraph-consensus-guard.git"
 Issues = "https://github.com/Anonymous-hss/langgraph-consensus-guard/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/langgraph_consensus_guard"]
+packages = [
+    "src/consensus_guard",
+    "src/langgraph_consensus_guard",
+]
 
 [tool.ruff]
 target-version = "py310"
@@ -87,7 +92,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["langgraph_consensus_guard"]
+known-first-party = ["consensus_guard", "langgraph_consensus_guard"]
 
 [tool.pyright]
 include = ["src", "tests", "examples"]

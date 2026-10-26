@@ -20,4 +20,4 @@ ignore = [
 ]
 
 [lint.isort]
-known-first-party = ["langgraph_consensus_guard"]
+known-first-party = ["consensus_guard", "langgraph_consensus_guard"]
