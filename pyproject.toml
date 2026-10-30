@@ -44,6 +44,7 @@ dependencies = [
     "typing_extensions>=4.8.0",
     "pandas>=2.0.0",
     "numpy>=1.24.0",
+    "opentelemetry-api>=1.20.0",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +57,7 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "ruff>=0.4.0",
     "pyright>=1.1.360",
+    "opentelemetry-sdk>=1.20.0",
 ]
 
 [project.urls]

@@ -10,21 +10,26 @@ from __future__ import annotations
 import asyncio
 import logging
 import operator
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from typing_extensions import TypedDict
+from typing_extensions import NotRequired, TypedDict
 
-from consensus_guard.layer1 import (
-    GateResult,
-    Layer1Stats,
-    compute_layer1_stats,
-    evaluate_statistical_invariants,
+from consensus_guard.telemetry import (
+    consensus_reducer,
+    domain_voters_fanout,
+    layer1_gate,
 )
 from consensus_guard.voters import (
     DomainVote,
     drift_consensus_voter,
     schema_integrity_voter,
 )
+
+if TYPE_CHECKING:
+    from consensus_guard.layer1 import (
+        GateResult,
+        Layer1Stats,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +46,9 @@ class ConsensusState(TypedDict):
     short_circuited: bool
     rejection_reason: str | None
     metadata: dict[str, Any]
+    tokens_saved_estimate: NotRequired[int]
+    voter_variance: NotRequired[float]
+    judge_override: NotRequired[bool]
 
 
 # ---------------------------------------------------------------------------
@@ -50,36 +58,7 @@ class ConsensusState(TypedDict):
 
 async def layer1_gate_node(state: ConsensusState) -> dict[str, Any]:
     """Node 1: Compute Layer 1 stats and evaluate deterministic statistical invariants."""
-    raw_data = state.get("raw_data")
-    stats = state.get("stats")
-
-    if stats is None and raw_data is not None:
-        stats = compute_layer1_stats(raw_data)
-
-    if stats is None:
-        stats = Layer1Stats(
-            row_count=0,
-            column_count=0,
-            null_ratios={},
-            cardinality_ratios={},
-            drift_slopes={},
-            drift_sigmas={},
-        )
-
-    meta = state.get("metadata") or {}
-    max_null = float(meta.get("max_null_ratio", 0.05))
-    max_drift = float(meta.get("max_drift_sigma", 3.0))
-
-    gate_result = evaluate_statistical_invariants(
-        stats=stats,
-        max_null_ratio=max_null,
-        max_drift_sigma=max_drift,
-    )
-
-    return {
-        "stats": stats,
-        "gate_result": gate_result,
-    }
+    return await layer1_gate(dict(state))
 
 
 def route_after_gate(state: ConsensusState) -> list[str] | str:
@@ -120,27 +99,7 @@ async def drift_consensus_voter_node(state: ConsensusState) -> dict[str, Any]:
 
 async def consensus_reducer_node(state: ConsensusState) -> dict[str, Any]:
     """Fan-in node: aggregate all Pydantic domain votes and issue final consensus verdict."""
-    votes: list[DomainVote] = state.get("votes") or []
-    if not votes:
-        return {
-            "consensus_score": 0.0,
-            "consensus_verdict": "REJECTED",
-            "short_circuited": False,
-            "rejection_reason": "No domain votes recorded by consensus reducer.",
-        }
-
-    total_weight = sum(max(0.1, v.confidence) for v in votes)
-    weighted_score = sum(v.score * max(0.1, v.confidence) for v in votes) / total_weight
-    all_passed = all(v.passed for v in votes)
-
-    verdict = "APPROVED" if (all_passed and weighted_score >= 0.70) else "REJECTED"
-
-    return {
-        "consensus_score": round(float(weighted_score), 4),
-        "consensus_verdict": verdict,
-        "short_circuited": False,
-        "rejection_reason": None if verdict == "APPROVED" else "Domain vote consensus threshold not satisfied.",
-    }
+    return await consensus_reducer(dict(state))
 
 
 # ---------------------------------------------------------------------------
@@ -221,21 +180,11 @@ class StandaloneConsensusGraphRunner:
             curr.update(rejection_update)  # type: ignore[arg-type]
             return curr
 
-        # 3. Concurrent Domain Fan-Out via asyncio.gather
-        voter_coros = [
-            schema_integrity_voter_node(curr),
-            drift_consensus_voter_node(curr),
-        ]
-        voter_outputs = await asyncio.gather(*voter_coros)
+        # 3. Concurrent Domain Fan-Out via domain_voters_fanout
+        fanout_update = await domain_voters_fanout(curr)
+        curr.update(fanout_update)  # type: ignore[arg-type]
 
-        # 4. Pydantic Reducer (operator.add on votes list)
-        reduced_votes: list[DomainVote] = list(curr.get("votes") or [])
-        for out in voter_outputs:
-            if "votes" in out and isinstance(out["votes"], list):
-                reduced_votes.extend(out["votes"])
-        curr["votes"] = reduced_votes
-
-        # 5. Consensus Reducer Node
+        # 4. Consensus Reducer Node
         reducer_update = await consensus_reducer_node(curr)
         curr.update(reducer_update)  # type: ignore[arg-type]
 
